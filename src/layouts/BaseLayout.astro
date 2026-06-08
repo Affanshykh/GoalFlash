@@ -40,8 +40,9 @@ const langToggleLink = isAR
 const scoresLabel = isAR ? "الرئيسية" : "Home";
 const langLabel = isAR ? "English" : "العربية";
 
-// Google GSC & GA integration variables
+// GSC, Bing Webmaster & Google Analytics integration variables
 const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION || "";
+const bingSiteVerification = import.meta.env.PUBLIC_BING_SITE_VERIFICATION || "";
 const googleAnalyticsId = import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID || "";
 ---
 
@@ -54,9 +55,12 @@ const googleAnalyticsId = import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID || "";
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
 
-    <!-- Google Search Console Verification -->
+    <!-- Search Console Verifications -->
     {googleSiteVerification && (
       <meta name="google-site-verification" content={googleSiteVerification} />
+    )}
+    {bingSiteVerification && (
+      <meta name="msvalidate.01" content={bingSiteVerification} />
     )}
 
     <!-- Google Analytics (gtag.js) -->
