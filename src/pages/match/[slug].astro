@@ -1,0 +1,408 @@
+---
+/**
+ * match/[slug].astro
+ * ──────────────────
+ * Root Arabic Match Detail Page. Features pre-rendered SEO content
+ * combined with client-side real-time scoring and sharing capability.
+ */
+
+import { readdirSync, readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Scoreboard from "../../components/Scoreboard.astro";
+import BottomNav from "../../components/BottomNav.astro";
+import tournaments from "../../data/tournaments.json";
+import news from "../../data/news.json";
+
+export function getStaticPaths() {
+  const matchesDir = resolve(process.cwd(), "src/data/matches");
+  if (!existsSync(matchesDir)) return [];
+  
+  const files = readdirSync(matchesDir).filter((f) => f.endsWith(".json"));
+  const allMatches = [];
+  
+  for (const file of files) {
+    try {
+      const content = JSON.parse(readFileSync(resolve(matchesDir, file), "utf-8"));
+      allMatches.push(...content);
+    } catch { /* ignore */ }
+  }
+  
+  return allMatches.map((m) => ({
+    params: { slug: m.slugEN },
+    props: { match: m },
+  }));
+}
+
+const { match: m } = Astro.props;
+
+// ── Arabic SEO strings ────────────────────────────────────────
+const scoreText = m.status.isUpcoming
+  ? "لم تبدأ بعد"
+  : `${m.home.goals} – ${m.away.goals}`;
+
+const statusText = m.status.isLive 
+  ? "مباشر" 
+  : m.status.isFinished 
+    ? "النتيجة النهائية" 
+    : "لم تبدأ بعد";
+
+const tournamentAR = m.badge.ar;
+const tournamentEN = m.badge.en;
+
+const title = `نتيجة مباراة ${m.home.nameAR} ضد ${m.away.nameAR} — نتيجة ${scoreText} | ${tournamentAR} | GoalFlash`;
+const description = `تغطية حية ومباشرة لمباراة ${m.home.nameAR} ضد ${m.away.nameAR} ضمن منافسات ${tournamentAR} — نتيجة اللقاء: ${scoreText}. تابع الأهداف والتحديثات الفورية لحظة بلحظة.`;
+
+const enURL = `${Astro.url.origin}/en/match/${m.slugEN}/`;
+
+const matchDate = new Date(m.date);
+const dateAR = matchDate.toLocaleDateString("ar-SA", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric",
+});
+const timeAR = matchDate.toLocaleTimeString("ar-SA", {
+  hour: "2-digit", minute: "2-digit", timeZone: "Asia/Riyadh",
+});
+
+// Find matching tournament slug
+const tournamentObj = tournaments.find((t) => t.leagueName === m.league.name);
+const tournamentUrl = tournamentObj ? `/tournament/${tournamentObj.slug}/` : "/";
+
+// Determine addressCountry dynamically matching the league
+let addressCountry = "US";
+if (!m.isWorldCup) {
+  if (m.league.id === 39) addressCountry = "GB";
+  else if (m.league.id === 140) addressCountry = "ES";
+  else if (m.league.id === 307 || m.isSaudiLeague) addressCountry = "SA";
+  else addressCountry = "SA"; // fallback
+}
+
+// ── SportsEvent JSON-LD (Arabic variant) ──────────────────────
+const endDate = new Date(matchDate.getTime() + 2 * 60 * 60 * 1000).toISOString();
+const eventStatus = m.status.isFinished
+  ? "https://schema.org/EventCompleted"
+  : m.status.isLive
+    ? "https://schema.org/EventActive"
+    : "https://schema.org/EventScheduled";
+
+const sportsEventLd = {
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  name: `${m.home.nameAR} ضد ${m.away.nameAR}`,
+  description: `مباراة ${tournamentAR} بين ${m.home.nameAR} و ${m.away.nameAR}`,
+  startDate: m.date,
+  endDate: endDate,
+  eventStatus: eventStatus,
+  location: {
+    "@type": "Place",
+    name: m.venue.name || "ملعب",
+    address: { "@type": "PostalAddress", addressCountry: addressCountry },
+  },
+  homeTeam: { 
+    "@type": "SportsTeam", 
+    name: m.home.nameAR, 
+    alternateName: m.home.name,
+    ...(m.home.logo ? { logo: m.home.logo } : {})
+  },
+  awayTeam: { 
+    "@type": "SportsTeam", 
+    name: m.away.nameAR, 
+    alternateName: m.away.name,
+    ...(m.away.logo ? { logo: m.away.logo } : {})
+  },
+  ...((m.status.isFinished || m.status.isLive) && {
+    result: { "@type": "SportsEventResult", homeScore: m.home.goals, awayScore: m.away.goals },
+  }),
+  organizer: { "@type": "SportsOrganization", name: m.isWorldCup ? "الفيفا" : m.league.nameAR },
+};
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "الرئيسية", item: Astro.url.origin },
+    { "@type": "ListItem", position: 2, name: tournamentAR },
+    { "@type": "ListItem", position: 3, name: `${m.home.nameAR} ضد ${m.away.nameAR}` },
+  ],
+};
+
+const matchingArticle = news.find((item) => item.linkEN === `/match/${m.slugEN}/`);
+let newsArticleLd = null;
+if (matchingArticle) {
+  newsArticleLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: matchingArticle.titleAR,
+    description: matchingArticle.summaryAR,
+    datePublished: matchingArticle.date,
+    dateModified: matchingArticle.date,
+    mainEntityOfPage: Astro.url.href,
+    image: [`${Astro.url.origin}/og-default.png`],
+    author: {
+      "@type": "Organization",
+      name: "هيئة تحرير جول فلاش",
+      url: Astro.url.origin,
+    },
+    publisher: {
+      "@type": "NewsMediaOrganization",
+      name: "جول فلاش",
+      url: Astro.url.origin,
+      logo: {
+        "@type": "ImageObject",
+        url: `${Astro.url.origin}/og-default.png`,
+      },
+    },
+    about: {
+      "@type": "SportsEvent",
+      name: `${m.home.nameAR} ضد ${m.away.nameAR}`,
+      startDate: m.date,
+      location: {
+        "@type": "Place",
+        name: m.venue.name || "ملعب",
+      },
+    },
+  };
+}
+
+const jsonLd = [sportsEventLd, breadcrumbLd];
+if (newsArticleLd) {
+  jsonLd.push(newsArticleLd);
+}
+---
+
+<BaseLayout title={title} description={description} lang="ar" dir="rtl" jsonLd={jsonLd}>
+  <link rel="alternate" hreflang="en" href={enURL} slot="head" />
+  <link rel="alternate" hreflang="ar" href={Astro.url.href} slot="head" />
+
+  <article class="match-detail">
+    <header class="page-header">
+      <p class="subtitle">
+        <a href={tournamentUrl} style={`color: ${m.badge.color}; font-family: var(--font-ar); text-decoration: none; font-weight: 700;`}>
+          {tournamentAR}
+        </a>
+      </p>
+      <h1 style="font-family:var(--font-ar);">{m.home.nameAR} ضد {m.away.nameAR}</h1>
+      <p class="subtitle">{m.home.name} vs {m.away.name}</p>
+      <p style="color:var(--text-muted);font-size:0.78rem;margin-top:0.5rem;font-family:var(--font-ar);">
+        {dateAR} &middot; {timeAR} (توقيت الرياض)
+        {m.venue.name && <> &middot; {m.venue.name}</>}
+      </p>
+    </header>
+
+    <!-- GIANT SCORE -->
+    <Scoreboard match={m} lang="ar" />
+
+    <!-- Sharing Section (Arabic) -->
+    <section class="share-section" style="direction: rtl;">
+      <span style="font-family:var(--font-ar);">مشاركة تفاصيل اللقاء</span>
+      <div class="share-buttons">
+        <button class="share-btn share-btn--x" id="share-x" style="font-family:var(--font-ar);" data-text={title}>
+          𝕏 نشر
+        </button>
+        <button class="share-btn share-btn--wa" id="share-wa" style="font-family:var(--font-ar);" data-text={title}>
+          واتساب
+        </button>
+        <button class="share-btn share-btn--link" id="share-link" style="font-family:var(--font-ar);" data-copied-text="تم النسخ!">
+          نسخ الرابط
+        </button>
+      </div>
+    </section>
+
+    <!-- Score breakdown -->
+    {m.status.isFinished && (
+      <section class="detail-section">
+        <h2 style="font-family:var(--font-ar);">تفاصيل النتيجة</h2>
+        <table class="score-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>{m.home.nameAR}</th>
+              <th>{m.away.nameAR}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {m.score.halftime.home !== null && (
+              <tr><td>الشوط الأول</td><td>{m.score.halftime.home}</td><td>{m.score.halftime.away}</td></tr>
+            )}
+            <tr><td>نهاية اللقاء</td><td>{m.score.fulltime.home ?? "–"}</td><td>{m.score.fulltime.away ?? "–"}</td></tr>
+            {m.score.extratime.home !== null && (
+              <tr><td>الوقت الإضافي</td><td>{m.score.extratime.home}</td><td>{m.score.extratime.away}</td></tr>
+            )}
+            {m.score.penalty.home !== null && (
+              <tr><td>ركلات الترجيح</td><td>{m.score.penalty.home}</td><td>{m.score.penalty.away}</td></tr>
+            )}
+          </tbody>
+        </table>
+      </section>
+    )}
+
+    <!-- Match info -->
+    <section class="detail-section">
+      <h2 style="font-family:var(--font-ar);">معلومات اللقاء</h2>
+      <p style="font-family:var(--font-ar);" id="match-info-para">
+        تقابل فريق <strong>{m.home.nameAR}</strong> مع نظيره
+        <strong>{m.away.nameAR}</strong> في مواجهة حاسمة ضمن بطولة
+        <strong>{tournamentAR}</strong>
+        {m.league.round && <> ({m.league.round})</>}
+        {m.venue.name && <> على أرضية ملعب {m.venue.name}</>}
+        وذلك يوم {dateAR}.
+        {m.status.isFinished && ` انتهت المواجهة بفوز أحد الفريقين بنتيجة ${m.home.goals} – ${m.away.goals}.`}
+        {m.status.isLive && ` المواجهة جارية الآن والنتيجة تشير إلى تعادل أو تقدم أحد الفريقين ${m.home.goals} – ${m.away.goals}.`}
+        {m.status.isUpcoming && ` ومن المقرر انطلاق صافرة البداية في تمام الساعة ${timeAR} بتوقيت الرياض.`}
+      </p>
+    </section>
+
+    <!-- About block for SEO -->
+    <section class="detail-section">
+      <h2 style="font-family:var(--font-ar);">عن هذا اللقاء</h2>
+      <p style="font-family:var(--font-ar);">
+        تقدم هذه الصفحة تفاصيل النتيجة النهائية والتحديثات الفورية لمواجهة
+        {m.home.nameAR} ضد {m.away.nameAR} في إطار منافسات
+        {m.isWorldCup
+          ? "كأس العالم ٢٠٢٦ المقامة بتنظيم مشترك في كندا والمكسيك والولايات المتحدة — أول نسخة بنظام الـ 48 منتخباً."
+          : `${m.league.nameAR}.`}
+        {" "}يتم تحديث لوحة الأهداف والنتائج بشكل فوري أثناء سير اللقاء.
+      </p>
+    </section>
+
+    <!-- Interlinking Links -->
+    <div style="text-align:center;margin-top:2rem;display:flex;gap:1.5rem;justify-content:center;font-size:0.85rem;font-family:var(--font-ar);">
+      <a href="/">← جميع النتائج</a>
+      <a href="/archive/">تقويم المباريات 📅</a>
+      <a href={enURL}>English ←</a>
+    </div>
+  </article>
+
+  <BottomNav currentPath={Astro.url.pathname} lang="ar" alternateURL={enURL} />
+
+  <!-- Client-Side Real-Time Score Engine & Sharing Script (Arabic) -->
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Live Scores Polling Logic
+      const container = document.getElementById("scoreboard-container");
+      if (!container) return;
+
+      const matchId = container.getAttribute("data-match-id");
+      let matchStatus = container.getAttribute("data-match-status");
+
+      // Check if match status is live
+      const liveStatuses = ["1H", "2H", "HT", "ET", "P", "BT", "INT"];
+      
+      if (liveStatuses.includes(matchStatus)) {
+        const homeGoalsVal = document.getElementById("home-goals-val");
+        const awayGoalsVal = document.getElementById("away-goals-val");
+        const statusLabel = document.getElementById("status-label");
+        const breakdownContainer = document.getElementById("breakdown-container");
+        const matchInfoPara = document.getElementById("match-info-para");
+
+        const pollInterval = setInterval(async () => {
+          try {
+            const res = await fetch(`/api/live-score/${matchId}`);
+            if (!res.ok) throw new Error("Network response error");
+            const data = await res.json();
+
+            // Animate on goal updates
+            if (data.home.goals !== null && homeGoalsVal.textContent !== String(data.home.goals)) {
+              homeGoalsVal.textContent = data.home.goals;
+              homeGoalsVal.classList.add("goal-pulse");
+              setTimeout(() => homeGoalsVal.classList.remove("goal-pulse"), 4500);
+            }
+            if (data.away.goals !== null && awayGoalsVal.textContent !== String(data.away.goals)) {
+              awayGoalsVal.textContent = data.away.goals;
+              awayGoalsVal.classList.add("goal-pulse");
+              setTimeout(() => awayGoalsVal.classList.remove("goal-pulse"), 4500);
+            }
+
+            // Update status
+            const elapsed = data.status.elapsed ? ` ${data.status.elapsed}'` : "";
+            if (data.status.isLive) {
+              statusLabel.textContent = `مباشر${elapsed}`;
+              statusLabel.className = "scoreboard__status status--live";
+              if (matchInfoPara) {
+                matchInfoPara.innerHTML = matchInfoPara.innerHTML.replace(
+                  /والنتيجة تشير إلى تعادل أو تقدم أحد الفريقين \d+ – \d+/,
+                  `والنتيجة تشير إلى تعادل أو تقدم أحد الفريقين ${data.home.goals} – ${data.away.goals}`
+                );
+              }
+            } else if (data.status.isFinished) {
+              statusLabel.textContent = "انتهت";
+              statusLabel.className = "scoreboard__status status--ft";
+              
+              // Show score breakdown
+              if (breakdownContainer && data.score) {
+                breakdownContainer.style.display = "flex";
+                breakdownContainer.innerHTML = "";
+                if (data.score.halftime.home !== null) {
+                  breakdownContainer.innerHTML += `<span>الشوط الأول: ${data.score.halftime.home}–${data.score.halftime.away}</span>`;
+                }
+                if (data.score.extratime.home !== null) {
+                  breakdownContainer.innerHTML += `<span>الوقت الإضافي: ${data.score.extratime.home}–${data.score.extratime.away}</span>`;
+                }
+                if (data.score.penalty.home !== null) {
+                  breakdownContainer.innerHTML += `<span>ركلات الترجيح: ${data.score.penalty.home}–${data.score.penalty.away}</span>`;
+                }
+              }
+              clearInterval(pollInterval);
+            }
+          } catch (error) {
+            console.warn("Live score refresh failed:", error);
+          }
+        }, 30000); // 30s
+      }
+
+      // 2. Share Buttons Logic
+      const shareX = document.getElementById("share-x");
+      const shareWA = document.getElementById("share-wa");
+      const shareLink = document.getElementById("share-link");
+      const currentUrl = window.location.href;
+
+      if (shareX) {
+        shareX.addEventListener("click", () => {
+          const text = encodeURIComponent(shareX.getAttribute("data-text") || "");
+          const url = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(currentUrl)}`;
+          window.open(url, "_blank");
+        });
+      }
+
+      if (shareWA) {
+        shareWA.addEventListener("click", () => {
+          const text = encodeURIComponent(shareWA.getAttribute("data-text") || "");
+          const url = `https://api.whatsapp.com/send?text=${text}%20${encodeURIComponent(currentUrl)}`;
+          window.open(url, "_blank");
+        });
+      }
+
+      if (shareLink) {
+        shareLink.addEventListener("click", async () => {
+          if (navigator.share) {
+            try {
+              await navigator.share({
+                title: document.title,
+                url: currentUrl,
+              });
+              return;
+            } catch (err) {
+              console.log("Web Share cancelled/failed", err);
+            }
+          }
+
+          try {
+            await navigator.clipboard.writeText(currentUrl);
+            const originalText = shareLink.innerHTML;
+            shareLink.textContent = shareLink.getAttribute("data-copied-text") || "تم النسخ!";
+            shareLink.style.background = "var(--accent)";
+            shareLink.style.color = "var(--bg)";
+            shareLink.style.borderColor = "var(--accent)";
+            setTimeout(() => {
+              shareLink.innerHTML = originalText;
+              shareLink.style.background = "";
+              shareLink.style.color = "";
+              shareLink.style.borderColor = "";
+            }, 2000);
+          } catch (err) {
+            console.error("Link copy failed", err);
+          }
+        });
+      }
+    });
+  </script>
+</BaseLayout>

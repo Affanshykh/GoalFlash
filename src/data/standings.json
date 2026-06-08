@@ -1,0 +1,16 @@
+{
+  "SPL": [
+    { "pos": 1, "team": "Al Hilal", "teamAR": "الهلال", "played": 28, "points": 74, "gd": "+45" },
+    { "pos": 2, "team": "Al Nassr", "teamAR": "النصر", "played": 28, "points": 62, "gd": "+32" },
+    { "pos": 3, "team": "Al Ahli", "teamAR": "الأهلي", "played": 28, "points": 55, "gd": "+18" },
+    { "pos": 4, "team": "Al Ittihad", "teamAR": "الاتحاد", "played": 28, "points": 51, "gd": "+12" },
+    { "pos": 5, "team": "Al Taawoun", "teamAR": "التعاون", "played": 28, "points": 48, "gd": "+8" }
+  ],
+  "EPL": [
+    { "pos": 1, "team": "Manchester City", "teamAR": "مانشستر سيتي", "played": 30, "points": 70, "gd": "+38" },
+    { "pos": 2, "team": "Arsenal", "teamAR": "أرسنال", "played": 30, "points": 68, "gd": "+35" },
+    { "pos": 3, "team": "Liverpool", "teamAR": "ليفربول", "played": 30, "points": 67, "gd": "+29" },
+    { "pos": 4, "team": "Aston Villa", "teamAR": "أستون فيلا", "played": 30, "points": 59, "gd": "+15" },
+    { "pos": 5, "team": "Tottenham", "teamAR": "توتنهام", "played": 30, "points": 57, "gd": "+10" }
+  ]
+}

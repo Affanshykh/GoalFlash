@@ -1,0 +1,41 @@
+---
+/**
+ * ar/archive/[date].astro
+ * ───────────────────────
+ * Redirects legacy Arabic date archives to root Arabic date archives.
+ */
+
+import { readdirSync, existsSync } from "fs";
+import { resolve } from "path";
+
+export function getStaticPaths() {
+  const matchesDir = resolve(process.cwd(), "src/data/matches");
+  if (!existsSync(matchesDir)) return [];
+  
+  const files = readdirSync(matchesDir).filter((f) => f.endsWith(".json"));
+  
+  return files.map((file) => {
+    const dateStr = file.replace(".json", "");
+    return {
+      params: { date: dateStr }
+    };
+  });
+}
+
+const { date } = Astro.params;
+const redirectPath = `/archive/${date}/`;
+const canonicalURL = `${Astro.url.origin}${redirectPath}`;
+---
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <link rel="canonical" href={canonicalURL} />
+    <meta http-equiv="refresh" content={`0;url=${redirectPath}`} />
+    <meta name="robots" content="noindex,follow" />
+  </head>
+  <body>
+    <p>Redirecting to <a href={redirectPath}>أرشيف مباريات يوم {date}</a>…</p>
+  </body>
+</html>

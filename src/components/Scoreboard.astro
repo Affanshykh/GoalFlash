@@ -1,0 +1,102 @@
+---
+/**
+ * Scoreboard.astro
+ * ────────────────
+ * The hero score element that sits above the fold on every match page.
+ * Includes tournament badge, team logos, and bilingual names.
+ * Outfitted with DOM hooks for client-side live polling.
+ */
+
+interface Props {
+  match: any;
+  lang?: "en" | "ar";
+}
+
+const { match: m, lang = "en" } = Astro.props;
+
+const isAR = lang === "ar";
+const homeName = isAR ? m.home.nameAR : m.home.name;
+const awayName = isAR ? m.away.nameAR : m.away.name;
+const homeNameAlt = isAR ? m.home.name : m.home.nameAR;
+const awayNameAlt = isAR ? m.away.name : m.away.nameAR;
+const badgeLabel = isAR ? m.badge.ar : m.badge.en;
+
+const statusLabel = m.status.isLive
+  ? (isAR ? `مباشر ${m.status.elapsed}'` : `LIVE ${m.status.elapsed}'`)
+  : m.status.isFinished
+    ? (isAR ? "انتهت" : "Full Time")
+    : (isAR ? "لم تبدأ" : "Upcoming");
+
+const statusClass = m.status.isLive
+  ? "status--live"
+  : m.status.isFinished
+    ? "status--ft"
+    : "status--upcoming";
+
+const scoreboardClass = m.isWorldCup ? "scoreboard scoreboard--worldcup" : "scoreboard";
+---
+
+<div class={scoreboardClass} id="scoreboard-container" data-match-id={m.id} data-match-status={m.status.short}>
+  <!-- Tournament badge ribbon -->
+  <div class="scoreboard__badge" style={`background: ${m.badge.color};`}>
+    <span class="scoreboard__badge-label" style={`background: ${m.badge.color};`}>
+      {badgeLabel}
+      {m.league.round && <> &middot; {m.league.round}</>}
+    </span>
+  </div>
+
+  <!-- Home team -->
+  <div class="scoreboard__team">
+    {m.home.logo && (
+      <img
+        src={m.home.logo}
+        alt={homeName}
+        class="scoreboard__team-logo"
+        width="72"
+        height="72"
+      />
+    )}
+    <span class="scoreboard__team-name">{homeName}</span>
+    <span class="scoreboard__team-name-ar">{homeNameAlt}</span>
+  </div>
+
+  <!-- Score center -->
+  <div class="scoreboard__center">
+    <div class="scoreboard__goals">
+      <span id="home-goals-val">{m.home.goals ?? "–"}</span>
+      <span class="divider">:</span>
+      <span id="away-goals-val">{m.away.goals ?? "–"}</span>
+    </div>
+    <span id="status-label" class={`scoreboard__status ${statusClass}`}>
+      {statusLabel}
+    </span>
+  </div>
+
+  <!-- Away team -->
+  <div class="scoreboard__team">
+    {m.away.logo && (
+      <img
+        src={m.away.logo}
+        alt={awayName}
+        class="scoreboard__team-logo"
+        width="72"
+        height="72"
+      />
+    )}
+    <span class="scoreboard__team-name">{awayName}</span>
+    <span class="scoreboard__team-name-ar">{awayNameAlt}</span>
+  </div>
+</div>
+
+<!-- Halftime / Penalty breakdown -->
+<div class="score-breakdown" id="breakdown-container" style={m.status.isFinished ? "" : "display: none;"}>
+  {m.score.halftime.home !== null && (
+    <span id="ht-val">HT: {m.score.halftime.home}–{m.score.halftime.away}</span>
+  )}
+  {m.score.extratime.home !== null && (
+    <span id="et-val">ET: {m.score.extratime.home}–{m.score.extratime.away}</span>
+  )}
+  {m.score.penalty.home !== null && (
+    <span id="pen-val">PEN: {m.score.penalty.home}–{m.score.penalty.away}</span>
+  )}
+</div>

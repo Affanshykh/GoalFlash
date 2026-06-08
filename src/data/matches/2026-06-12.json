@@ -1,0 +1,19 @@
+[
+  {
+    "id": 900001,
+    "slugEN": "saudi-arabia-vs-uruguay-live-score",
+    "slugAR": "مباراة-السعودية-ضد-أوروغواي",
+    "league": { "id": 1, "name": "FIFA World Cup", "nameAR": "كأس العالم", "season": 2026, "logo": "", "round": "Group C - 1" },
+    "badge": { "en": "World Cup 2026", "ar": "كأس العالم ٢٠٢٦", "color": "#d4af37" },
+    "isWorldCup": true,
+    "isSaudiLeague": false,
+    "home": { "name": "Saudi Arabia", "nameAR": "السعودية", "logo": "", "goals": 2, "winner": true },
+    "away": { "name": "Uruguay", "nameAR": "أوروغواي", "logo": "", "goals": 1, "winner": false },
+    "status": { "short": "FT", "long": "Match Finished", "elapsed": 90, "isLive": false, "isFinished": true, "isUpcoming": false },
+    "score": { "halftime": { "home": 1, "away": 0 }, "fulltime": { "home": 2, "away": 1 }, "extratime": { "home": null, "away": null }, "penalty": { "home": null, "away": null } },
+    "venue": { "name": "MetLife Stadium", "city": "East Rutherford" },
+    "date": "2026-06-12T18:00:00+00:00",
+    "timestamp": 1781452800,
+    "fetchedAt": "2026-06-12T20:00:00Z"
+  }
+]

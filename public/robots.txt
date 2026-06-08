@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://goalflash.pages.dev/sitemap-index.xml

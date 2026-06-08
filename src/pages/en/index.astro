@@ -1,0 +1,456 @@
+---
+/**
+ * en/index.astro
+ * ──────────────
+ * English Homepage. Displays today's live scores, fixtures, and results
+ * grouped by match state (Live, Upcoming, Finished) and tournament.
+ */
+
+import { existsSync, readFileSync, readdirSync } from "fs";
+import { resolve } from "path";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MatchCard from "../../components/MatchCard.astro";
+import BottomNav from "../../components/BottomNav.astro";
+import standings from "../../data/standings.json";
+import news from "../../data/news.json";
+import tournaments from "../../data/tournaments.json";
+
+const matchesDir = resolve(process.cwd(), "src/data/matches");
+const today = new Date().toISOString().slice(0, 10);
+let matches = [];
+let displayedDate = today;
+
+if (existsSync(resolve(matchesDir, `${today}.json`))) {
+  try {
+    matches = JSON.parse(readFileSync(resolve(matchesDir, `${today}.json`), "utf-8"));
+  } catch { /* ignore */ }
+}
+
+// Fallback to the latest available matches file (e.g. dev testing or off-season)
+if (matches.length === 0 && existsSync(matchesDir)) {
+  const files = readdirSync(matchesDir)
+    .filter((f) => f.endsWith(".json"))
+    .sort()
+    .reverse();
+    
+  if (files.length > 0) {
+    try {
+      matches = JSON.parse(readFileSync(resolve(matchesDir, files[0]), "utf-8"));
+      displayedDate = files[0].replace(".json", "");
+    } catch { /* ignore */ }
+  }
+}
+
+const title = "Live Football Scores & Match Results | GoalFlash";
+const description = "Live football scores, schedules, and archives. FIFA World Cup 2026, Saudi Pro League, Champions League — instant goal updates.";
+
+// Group matches by Status first (Live, Upcoming, Finished)
+const liveMatches = matches.filter(m => m.status.isLive);
+const upcomingMatches = matches.filter(m => m.status.isUpcoming);
+const finishedMatches = matches.filter(m => m.status.isFinished);
+
+// Helper function to group matches by league
+function groupByLeague(matchList: typeof matches) {
+  const grouped: Record<string, typeof matches> = {};
+  for (const m of matchList) {
+    const key = m.league.name;
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(m);
+  }
+  return grouped;
+}
+
+const liveGrouped = groupByLeague(liveMatches);
+const upcomingGrouped = groupByLeague(upcomingMatches);
+const finishedGrouped = groupByLeague(finishedMatches);
+
+// Sort helper: World Cup > Saudi Pro > rest
+function sortLeagues(groupedObj: Record<string, typeof matches>) {
+  return Object.keys(groupedObj).sort((a, b) => {
+    if (a === "FIFA World Cup") return -1;
+    if (b === "FIFA World Cup") return 1;
+    if (a === "Saudi Pro League") return -1;
+    if (b === "Saudi Pro League") return 1;
+    return a.localeCompare(b);
+  });
+}
+
+const liveLeagues = sortLeagues(liveGrouped);
+const upcomingLeagues = sortLeagues(upcomingGrouped);
+const finishedLeagues = sortLeagues(finishedGrouped);
+
+// Get other active archive dates for footer interlinking
+let recentDates: string[] = [];
+if (existsSync(matchesDir)) {
+  recentDates = readdirSync(matchesDir)
+    .filter((f) => f.endsWith(".json") && f !== `${displayedDate}.json`)
+    .map((f) => f.replace(".json", ""))
+    .sort()
+    .reverse()
+    .slice(0, 4); // Keep latest 4 dates for neat sidebar links
+}
+
+const arAlternateURL = `${Astro.url.origin}/`;
+
+const websiteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "GoalFlash",
+  "alternateName": "جول فلاش",
+  "url": `${Astro.url.origin}/en/`,
+  "description": description,
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": `${Astro.url.origin}/en/?q={search_term_string}`,
+    "query-input": "required name=search_term_string"
+  }
+};
+
+const orgLd = {
+  "@context": "https://schema.org",
+  "@type": "NewsMediaOrganization",
+  "name": "GoalFlash",
+  "alternateName": "جول فلاش",
+  "url": Astro.url.origin,
+  "logo": {
+    "@type": "ImageObject",
+    "url": `${Astro.url.origin}/og-default.png`,
+    "width": 1200,
+    "height": 630
+  },
+  "description": "Leading sports portal for real-time goal alerts, live score coverage, and league standings.",
+  "sameAs": [
+    "https://twitter.com/GoalFlash",
+    "https://facebook.com/GoalFlash"
+  ]
+};
+
+const jsonLd = [websiteLd, orgLd];
+---
+
+<BaseLayout title={title} description={description} lang="en" dir="ltr" jsonLd={jsonLd}>
+  <!-- Hreflang alternate headers -->
+  <link rel="alternate" hreflang="ar" href={arAlternateURL} slot="head" />
+  <link rel="alternate" hreflang="en" href={Astro.url.href} slot="head" />
+  <link rel="alternate" hreflang="x-default" href={arAlternateURL} slot="head" />
+
+  <!-- Premium Hero Banner -->
+  <div class="hero-banner">
+    <img src="/hero-banner.png" alt="GoalFlash Stadium Scene" class="hero-banner__img" />
+    <div class="hero-banner__content">
+      <span class="hero-banner__subtitle">World Cup 2026 & Saudi Pro League</span>
+      <h2 class="hero-banner__title">Football Score Portal</h2>
+      <p class="hero-banner__desc">Instant goal alerts, live match scoreboards, and comprehensive history archives.</p>
+    </div>
+  </div>
+
+  <div class="portal-layout">
+    <!-- Main Content (Matches by Status) -->
+    <div>
+      <!-- Interactive Category Filter Chips -->
+      <div class="filter-container">
+        <button class="filter-chip active" data-filter="all">All Matches</button>
+        <button class="filter-chip" data-filter="live">🔴 Live Now ({liveMatches.length})</button>
+        <button class="filter-chip" data-filter="upcoming">Upcoming ({upcomingMatches.length})</button>
+        <button class="filter-chip" data-filter="finished">Finished ({finishedMatches.length})</button>
+      </div>
+
+      {matches.length === 0 && (
+        <div style="text-align:center;padding:3rem 0;color:var(--text-dim);" id="no-matches-msg">
+          <p style="font-size:1.2rem;">No matches scheduled today.</p>
+          <p style="margin-top:0.4rem;">Check back during match days or browse the archive.</p>
+        </div>
+      )}
+
+      <!-- Matches Container grouped by State -->
+      <div id="matches-container">
+        <!-- 1. LIVE MATCHES SECTION -->
+        {liveLeagues.length > 0 && (
+          <div class="match-state-group" data-group="live">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--live-red); display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--live-red); animation: pulse 1.6s infinite;"></span>
+              Live Matches
+            </h2>
+            {liveLeagues.map((leagueName) => {
+              const leagueMatches = liveGrouped[leagueName];
+              const sample = leagueMatches[0];
+              const tObj = tournaments.find(t => t.leagueName === sample.league.name);
+              const tUrl = tObj ? `/en/tournament/${tObj.slug}/` : "/en/";
+              return (
+                <section class="league-section">
+                  <div class="league-header">
+                    <span class="league-header__dot" style={`background: ${sample.badge.color};`} />
+                    <a href={tUrl} class="league-header__name" style="text-decoration: none; color: #fff; font-weight: 700;">
+                      {sample.badge.en}
+                    </a>
+                    <span class="league-header__name-ar">{sample.badge.ar}</span>
+                    {sample.league.round && <span class="league-header__round">{sample.league.round}</span>}
+                  </div>
+                  <div class="match-list">
+                    {leagueMatches.map((m) => (
+                      <MatchCard match={m} lang="en" />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )}
+
+        <!-- 2. UPCOMING MATCHES SECTION -->
+        {upcomingLeagues.length > 0 && (
+          <div class="match-state-group" data-group="upcoming">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: #fff; margin-top: 1.5rem; margin-bottom: 0.5rem;">Upcoming Fixtures</h2>
+            {upcomingLeagues.map((leagueName) => {
+              const leagueMatches = upcomingGrouped[leagueName];
+              const sample = leagueMatches[0];
+              const tObj = tournaments.find(t => t.leagueName === sample.league.name);
+              const tUrl = tObj ? `/en/tournament/${tObj.slug}/` : "/en/";
+              return (
+                <section class="league-section">
+                  <div class="league-header">
+                    <span class="league-header__dot" style={`background: ${sample.badge.color};`} />
+                    <a href={tUrl} class="league-header__name" style="text-decoration: none; color: #fff; font-weight: 700;">
+                      {sample.badge.en}
+                    </a>
+                    <span class="league-header__name-ar">{sample.badge.ar}</span>
+                    {sample.league.round && <span class="league-header__round">{sample.league.round}</span>}
+                  </div>
+                  <div class="match-list">
+                    {leagueMatches.map((m) => (
+                      <MatchCard match={m} lang="en" />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )}
+
+        <!-- 3. FINISHED MATCHES SECTION -->
+        {finishedLeagues.length > 0 && (
+          <div class="match-state-group" data-group="finished">
+            <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text-dim); margin-top: 1.5rem; margin-bottom: 0.5rem;">Results</h2>
+            {finishedLeagues.map((leagueName) => {
+              const leagueMatches = finishedGrouped[leagueName];
+              const sample = leagueMatches[0];
+              const tObj = tournaments.find(t => t.leagueName === sample.league.name);
+              const tUrl = tObj ? `/en/tournament/${tObj.slug}/` : "/en/";
+              return (
+                <section class="league-section">
+                  <div class="league-header">
+                    <span class="league-header__dot" style={`background: ${sample.badge.color};`} />
+                    <a href={tUrl} class="league-header__name" style="text-decoration: none; color: #fff; font-weight: 700;">
+                      {sample.badge.en}
+                    </a>
+                    <span class="league-header__name-ar">{sample.badge.ar}</span>
+                    {sample.league.round && <span class="league-header__round">{sample.league.round}</span>}
+                  </div>
+                  <div class="match-list">
+                    {leagueMatches.map((m) => (
+                      <MatchCard match={m} lang="en" />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Sidebar Widgets -->
+    <aside>
+      <!-- Standings Widget -->
+      <div class="standings-widget" style="margin-bottom: 1.5rem;">
+        <h2>League Tables</h2>
+        <div class="standings-widget__tabs">
+          <button class="standings-widget__tab-btn active" data-league="SPL">Saudi Pro</button>
+          <button class="standings-widget__tab-btn" data-league="EPL">English PL</button>
+        </div>
+
+        <table class="standings-table" id="standings-SPL">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Team</th>
+              <th style="text-align: right;">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {standings.SPL.map((row) => (
+              <tr>
+                <td class="standings-table__pos">{row.pos}</td>
+                <td class="standings-table__team">{row.team}</td>
+                <td class="standings-table__pts">{row.points}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <table class="standings-table" id="standings-EPL" style="display: none;">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Team</th>
+              <th style="text-align: right;">Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {standings.EPL.map((row) => (
+              <tr>
+                <td class="standings-table__pos">{row.pos}</td>
+                <td class="standings-table__team">{row.team}</td>
+                <td class="standings-table__pts">{row.points}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Upcoming Tournaments Widget -->
+      <div class="standings-widget" style="margin-bottom: 1.5rem;">
+        <h2>Upcoming Tournaments</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem;">
+          <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+            <a href="/en/tournament/fifa-world-cup-2026/" style="font-weight: 700; color: #fff; font-size: 0.85rem; text-decoration: none;">FIFA World Cup 2026</a>
+            <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-top: 0.1rem;">Starts June 11, 2026 &middot; 3 Days</div>
+          </div>
+          <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+            <a href="/en/tournament/saudi-pro-league/" style="font-weight: 700; color: #fff; font-size: 0.85rem; text-decoration: none;">Saudi Pro League 26/27</a>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">Starts August 2026 &middot; Off-season</div>
+          </div>
+          <div>
+            <a href="/en/tournament/premier-league/" style="font-weight: 700; color: #fff; font-size: 0.85rem; text-decoration: none;">English Premier League</a>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;">Starts August 2026 &middot; Off-season</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEO Interlinking Calendar Widget -->
+      {recentDates.length > 0 && (
+        <div class="standings-widget">
+          <h2>Recent Score Archives</h2>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+            {recentDates.map((dateStr) => {
+              const dObj = new Date(dateStr);
+              const formatted = dObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              return (
+                <a href={`/en/archive/${dateStr}/`} style="color: var(--text-dim); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; text-decoration: none;">
+                  <span>📅 {formatted}</span>
+                  <span style="color: var(--accent); font-size: 0.75rem;">View →</span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </aside>
+  </div>
+
+  <!-- News Section -->
+  <section class="news-section">
+    <h2>Latest Football Coverage</h2>
+    <div class="news-grid">
+      {news.map((item) => (
+        <a href={`/en${item.linkEN}`} class="news-card">
+          <span class="news-card__category">{item.category}</span>
+          <h3 class="news-card__title">{item.title}</h3>
+          <p class="news-card__summary">{item.summary}</p>
+          <div class="news-card__meta">{item.date} &middot; GoalFlash Editorial</div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- SEO FAQ Section -->
+  <section class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    <details class="faq-item">
+      <summary>How often are the football live scores updated?</summary>
+      <p>GoalFlash scores update automatically in real-time when matches are LIVE. The client-side poller refreshes every 30 seconds so you never miss a goal.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Which leagues and tournaments are covered?</summary>
+      <p>We focus heavily on the FIFA World Cup 2026 and the Saudi Pro League (SPL). We also cover major European leagues including the Champions League, Premier League, and La Liga.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Where can I find finished match results?</summary>
+      <p>You can browse our Calendar Archive by clicking the "Calendar" tab in the bottom navigation.</p>
+    </details>
+  </section>
+
+  <BottomNav currentPath={Astro.url.pathname} lang="en" alternateURL={arAlternateURL} />
+
+  <!-- Client-side Scripts -->
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Matches Filter Logic
+      const chips = document.querySelectorAll(".filter-chip");
+      const stateGroups = document.querySelectorAll(".match-state-group");
+      const noMatchesMsg = document.getElementById("no-matches-msg");
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialStatus = urlParams.get("status");
+
+      if (initialStatus === "live") {
+        const liveChip = document.querySelector('.filter-chip[data-filter="live"]');
+        if (liveChip) filterCards("live", liveChip);
+      }
+
+      chips.forEach((chip) => {
+        chip.addEventListener("click", () => {
+          const filter = chip.getAttribute("data-filter");
+          filterCards(filter, chip);
+        });
+      });
+
+      function filterCards(filter, activeChip) {
+        chips.forEach((c) => c.classList.remove("active"));
+        activeChip.classList.add("active");
+
+        let overallVisible = 0;
+
+        stateGroups.forEach((group) => {
+          const groupState = group.getAttribute("data-group");
+          
+          if (filter === "all" || groupState === filter) {
+            group.style.display = "block";
+            const sectionCards = group.querySelectorAll(".match-card");
+            sectionCards.forEach(card => {
+              card.style.display = "grid";
+              overallVisible++;
+            });
+            
+            // Show all nested league sections
+            group.querySelectorAll(".league-section").forEach(s => s.style.display = "block");
+          } else {
+            group.style.display = "none";
+          }
+        });
+
+        if (noMatchesMsg) {
+          if (overallVisible === 0) {
+            noMatchesMsg.style.display = "block";
+            noMatchesMsg.querySelector("p").textContent = `No matches found matching filter: "${filter === "live" ? "Live" : filter === "upcoming" ? "Upcoming" : "Finished"}"`;
+          } else {
+            noMatchesMsg.style.display = "none";
+          }
+        }
+      }
+
+      // 2. Standings Tab Toggle Logic
+      const tabBtns = document.querySelectorAll(".standings-widget__tab-btn");
+      tabBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          tabBtns.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          
+          const league = btn.getAttribute("data-league");
+          document.getElementById("standings-SPL").style.display = league === "SPL" ? "table" : "none";
+          document.getElementById("standings-EPL").style.display = league === "EPL" ? "table" : "none";
+        });
+      });
+    });
+  </script>
+</BaseLayout>

@@ -1,0 +1,126 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalURL?: string;
+  ogImage?: string;
+  lang?: string;
+  dir?: string;
+  jsonLd?: object | object[];
+}
+
+const {
+  title,
+  description,
+  canonicalURL = Astro.url.href,
+  ogImage = "/og-default.png",
+  lang = "ar",
+  dir = "rtl",
+  jsonLd,
+} = Astro.props;
+
+const isAR = lang === "ar";
+const siteName = isAR ? "جول فلاش" : "GoalFlash";
+
+// Resolve relative OG image path to absolute URL
+const absoluteOgImage = new URL(ogImage, Astro.url.origin).toString();
+
+const jsonLdArray = jsonLd
+  ? Array.isArray(jsonLd) ? jsonLd : [jsonLd]
+  : [];
+
+// Localized links mapping (Arabic at root, English at /en/)
+const scoresLink = isAR ? "/" : "/en/";
+const langToggleLink = isAR
+  ? `/en${Astro.url.pathname}`.replace(/\/+/g, "/")
+  : Astro.url.pathname.replace(/^\/en(\/|$)/, "$1") || "/";
+
+const scoresLabel = isAR ? "الرئيسية" : "Home";
+const langLabel = isAR ? "English" : "العربية";
+
+// Google GSC & GA integration variables
+const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION || "";
+const googleAnalyticsId = import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID || "";
+---
+
+<!doctype html>
+<html lang={lang} dir={dir}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Google Search Console Verification -->
+    {googleSiteVerification && (
+      <meta name="google-site-verification" content={googleSiteVerification} />
+    )}
+
+    <!-- Google Analytics (gtag.js) -->
+    {googleAnalyticsId && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}></script>
+        <script is:inline define:vars={{ googleAnalyticsId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', googleAnalyticsId);
+        </script>
+      </>
+    )}
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={absoluteOgImage} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:locale" content={isAR ? "ar_SA" : "en_US"} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={absoluteOgImage} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- DNS Prefetch for team logos -->
+    <link rel="dns-prefetch" href="https://media.api-sports.io" />
+
+    <!-- JSON-LD Structured Data -->
+    {jsonLdArray.map((ld) => (
+      <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+    ))}
+
+    <slot name="head" />
+  </head>
+  <body>
+    <nav class="container site-nav">
+      <a href={scoresLink} class="site-nav__brand">⚡ {siteName}</a>
+      <div class="site-nav__links">
+        <a href={scoresLink}>{scoresLabel}</a>
+        <a href={langToggleLink}>{langLabel}</a>
+      </div>
+    </nav>
+
+    <main class="container">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p style="font-family: var(--font-ar);">
+        {isAR ? (
+          <>&copy; {new Date().getFullYear()} {siteName}. جميع الحقوق محفوظة. بيانات المباريات عبر API-Football. غير تابع للفيفا أو دوري روشن السعودي أو أي جهة رسمية.</>
+        ) : (
+          <>&copy; {new Date().getFullYear()} {siteName}. All rights reserved. Match data via API-Football. Not affiliated with FIFA, the Saudi Pro League, or any official organization.</>
+        )}
+      </p>
+    </footer>
+  </body>
+</html>

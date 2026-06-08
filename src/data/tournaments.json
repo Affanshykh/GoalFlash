@@ -1,0 +1,117 @@
+[
+  {
+    "slug": "fifa-world-cup-2026",
+    "name": "FIFA World Cup 2026",
+    "nameAR": "كأس العالم ٢٠٢٦",
+    "color": "#d4af37",
+    "leagueId": 1,
+    "leagueName": "FIFA World Cup",
+    "description": "The 23rd FIFA World Cup features 48 nations competing across 16 host cities in Canada, Mexico, and the United States. It is the largest and most diverse World Cup in history.",
+    "descriptionAR": "النسخة الثالثة والعشرون من كأس العالم لكرة القدم، وتقام في 16 مدينة مستضيفة عبر كندا والمكسيك والولايات المتحدة. وهي البطولة الأولى التي تضم 48 منتخباً في تاريخ كأس العالم.",
+    "grounds": [
+      { "name": "MetLife Stadium", "city": "East Rutherford", "capacity": "82,500", "nameAR": "ملعب ميتلايف", "cityAR": "إيست راثرفورد" },
+      { "name": "AT&T Stadium", "city": "Arlington", "capacity": "80,000", "nameAR": "ملعب إيه تي أند تي", "cityAR": "أرلينغتون" },
+      { "name": "SoFi Stadium", "city": "Los Angeles", "capacity": "70,240", "nameAR": "ملعب صوفي", "cityAR": "لوس أنجلوس" },
+      { "name": "Estadio Azteca", "city": "Mexico City", "capacity": "87,523", "nameAR": "ملعب أزتيكا", "cityAR": "مكسيكو سيتي" },
+      { "name": "BC Place", "city": "Vancouver", "capacity": "54,500", "nameAR": "ملعب بي سي بليس", "cityAR": "فانكوفر" }
+    ],
+    "players": [
+      { "name": "Salem Al-Dawsari", "team": "Saudi Arabia", "nameAR": "سالم الدوسري", "teamAR": "السعودية" },
+      { "name": "Lionel Messi", "team": "Argentina", "nameAR": "ليونيل ميسي", "teamAR": "الأرجنتين" },
+      { "name": "Kylian Mbappé", "team": "France", "nameAR": "كيليان مبابي", "teamAR": "فرنسا" },
+      { "name": "Jude Bellingham", "team": "England", "nameAR": "جود بيلينجهام", "teamAR": "إنجلترا" },
+      { "name": "Lamine Yamal", "team": "Spain", "nameAR": "لامين يامال", "teamAR": "إسبانيا" }
+    ],
+    "teams": [
+      { "name": "Saudi Arabia", "nameAR": "السعودية" },
+      { "name": "Uruguay", "nameAR": "أوروغواي" },
+      { "name": "Argentina", "nameAR": "الأرجنتين" },
+      { "name": "Spain", "nameAR": "إسبانيا" },
+      { "name": "USA", "nameAR": "الولايات المتحدة" },
+      { "name": "Mexico", "nameAR": "المكسيك" },
+      { "name": "Canada", "nameAR": "كندا" }
+    ]
+  },
+  {
+    "slug": "saudi-pro-league",
+    "name": "Saudi Pro League",
+    "nameAR": "دوري روشن السعودي للمحترفين",
+    "color": "#00843d",
+    "leagueId": 307,
+    "leagueName": "Saudi Pro League",
+    "description": "Also known as the Roshan Saudi League, it features Saudi Arabia's top professional football clubs, attracting world-class superstars and global attention.",
+    "descriptionAR": "المعروف بدوري روشن السعودي، وهو الدوري الممتاز لكرة القدم في المملكة العربية السعودية ويضم نخبة الأندية المحلية بمشاركة نجوم عالميين بارزين.",
+    "grounds": [
+      { "name": "Kingdom Arena", "city": "Riyadh", "capacity": "30,000", "nameAR": "المملكة أرينا", "cityAR": "الرياض" },
+      { "name": "King Abdullah Sports City", "city": "Jeddah", "capacity": "62,241", "nameAR": "مدينة الملك عبد الله الرياضية", "cityAR": "جدة" },
+      { "name": "King Fahd Stadium", "city": "Riyadh", "capacity": "68,752", "nameAR": "ملعب الملك فهد الدولي", "cityAR": "الرياض" }
+    ],
+    "players": [
+      { "name": "Cristiano Ronaldo", "team": "Al Nassr", "nameAR": "كريستيانو رونالدو", "teamAR": "النصر" },
+      { "name": "Neymar Jr", "team": "Al Hilal", "nameAR": "نيمار جونيور", "teamAR": "الهلال" },
+      { "name": "Karim Benzema", "team": "Al Ittihad", "nameAR": "كريم بنزيما", "teamAR": "الاتحاد" },
+      { "name": "Aleksandar Mitrović", "team": "Al Hilal", "nameAR": "ألكسندر ميتروفيتش", "teamAR": "الهلال" },
+      { "name": "Riyad Mahrez", "team": "Al Ahli", "nameAR": "رياض محرز", "teamAR": "الأهلي" }
+    ],
+    "teams": [
+      { "name": "Al Hilal", "nameAR": "الهلال" },
+      { "name": "Al Nassr", "nameAR": "النصر" },
+      { "name": "Al Ahli", "nameAR": "الأهلي" },
+      { "name": "Al Ittihad", "nameAR": "الاتحاد" },
+      { "name": "Al Taawoun", "nameAR": "التعاون" }
+    ]
+  },
+  {
+    "slug": "premier-league",
+    "name": "Premier League",
+    "nameAR": "الدوري الإنجليزي الممتاز",
+    "color": "#38003c",
+    "leagueId": 39,
+    "leagueName": "Premier League",
+    "description": "The English Premier League is the top level of the English football league system, widely considered the most popular and competitive league in the world.",
+    "descriptionAR": "الدوري الإنجليزي الممتاز لكرة القدم هو دوري الدرجة الأولى في إنجلترا، ويعتبر على نطاق واسع أكثر دوريات كرة القدم شعبية وإثارة وتنافسية حول العالم.",
+    "grounds": [
+      { "name": "Etihad Stadium", "city": "Manchester", "capacity": "53,400", "nameAR": "ملعب الاتحاد", "cityAR": "مانشستر" },
+      { "name": "Emirates Stadium", "city": "London", "capacity": "60,700", "nameAR": "ملعب الإمارات", "cityAR": "لندن" },
+      { "name": "Anfield", "city": "Liverpool", "capacity": "61,200", "nameAR": "ملعب آنفيلد", "cityAR": "ليفربول" }
+    ],
+    "players": [
+      { "name": "Erling Haaland", "team": "Manchester City", "nameAR": "إيرلينج هالاند", "teamAR": "مانشستر سيتي" },
+      { "name": "Bukayo Saka", "team": "Arsenal", "nameAR": "بوكايو ساكا", "teamAR": "أرسنال" },
+      { "name": "Mohamed Salah", "team": "Liverpool", "nameAR": "محمد صلاح", "teamAR": "ليفربول" },
+      { "name": "Kevin De Bruyne", "team": "Manchester City", "nameAR": "كيفين دي بروين", "teamAR": "مانشستر سيتي" }
+    ],
+    "teams": [
+      { "name": "Manchester City", "nameAR": "مانشستر سيتي" },
+      { "name": "Arsenal", "nameAR": "أرسنال" },
+      { "name": "Liverpool", "nameAR": "ليفربول" },
+      { "name": "Aston Villa", "nameAR": "أستون فيلا" },
+      { "name": "Tottenham", "nameAR": "توتنهام" }
+    ]
+  },
+  {
+    "slug": "la-liga",
+    "name": "La Liga",
+    "nameAR": "الدوري الإسباني",
+    "color": "#ee8707",
+    "leagueId": 140,
+    "leagueName": "La Liga",
+    "description": "The Campeonato Nacional de Liga de Primera División, commonly known as La Liga, represents the peak of Spanish professional football.",
+    "descriptionAR": "بطولة الدوري الإسباني للدرجة الأولى، والمعروفة باسم لا ليغا، تمثل القمة التنافسية لكرة القدم للمحترفين في إسبانيا وتضم أندية عريقة مثل ريال مدريد وبرشلونة.",
+    "grounds": [
+      { "name": "Santiago Bernabéu", "city": "Madrid", "capacity": "85,000", "nameAR": "سانتياغو برنابيو", "cityAR": "مدريد" },
+      { "name": "Spotify Camp Nou", "city": "Barcelona", "capacity": "99,354", "nameAR": "سبوتيفاي كامب نو", "cityAR": "برشلونة" },
+      { "name": "Cívitas Metropolitano", "city": "Madrid", "capacity": "70,460", "nameAR": "سيفيتاس ميتروبوليتانو", "cityAR": "مدريد" }
+    ],
+    "players": [
+      { "name": "Vinícius Júnior", "team": "Real Madrid", "nameAR": "فينيسيوس جونيور", "teamAR": "ريال مدريد" },
+      { "name": "Robert Lewandowski", "team": "Barcelona", "nameAR": "روبرت ليفاندوفسكي", "teamAR": "برشلونة" },
+      { "name": "Antoine Griezmann", "team": "Atlético Madrid", "nameAR": "أنطوان غريزمان", "teamAR": "أتلتيكو مدريد" }
+    ],
+    "teams": [
+      { "name": "Real Madrid", "nameAR": "ريال مدريد" },
+      { "name": "Barcelona", "nameAR": "برشلونة" },
+      { "name": "Atlético Madrid", "nameAR": "أتلتيكو مدريد" }
+    ]
+  }
+]

@@ -1,0 +1,71 @@
+---
+/**
+ * MatchCard.astro
+ * ────────────────
+ * Sleek card representing a single match. Used in listings.
+ * Outfitted with DOM tags for client-side filtering.
+ */
+
+interface Props {
+  match: any;
+  lang?: "en" | "ar";
+}
+
+const { match: m, lang = "en" } = Astro.props;
+
+const isAR = lang === "ar";
+const href = isAR ? `/match/${m.slugEN}/` : `/en/match/${m.slugEN}/`;
+const homeName = isAR ? m.home.nameAR : m.home.name;
+const awayName = isAR ? m.away.nameAR : m.away.name;
+const homeAlt = isAR ? m.home.name : m.home.nameAR;
+const awayAlt = isAR ? m.away.name : m.away.nameAR;
+
+const statusLabel = m.status.isLive
+  ? (isAR ? `مباشر ${m.status.elapsed}'` : `LIVE ${m.status.elapsed}'`)
+  : m.status.isFinished
+    ? (isAR ? "انتهت" : "FT")
+    : (isAR ? "لم تبدأ" : "Soon");
+
+const statusClass = m.status.isLive
+  ? "status--live"
+  : m.status.isFinished
+    ? "status--ft"
+    : "status--upcoming";
+
+const filterStatus = m.status.isLive
+  ? "live"
+  : m.status.isUpcoming
+    ? "upcoming"
+    : "finished";
+---
+
+<a href={href} class="match-card" data-status={filterStatus}>
+  <div class="match-card__home">
+    {m.home.logo && (
+      <img src={m.home.logo} alt={homeName} class="match-card__logo" loading="lazy" width="36" height="36" />
+    )}
+    <div>
+      <div class="match-card__team-name">{homeName}</div>
+      <div class="match-card__team-ar">{homeAlt}</div>
+    </div>
+  </div>
+
+  <div class="match-card__score">
+    {m.home.goals ?? "–"} – {m.away.goals ?? "–"}
+  </div>
+
+  <div class="match-card__away">
+    <div>
+      <div class="match-card__team-name">{awayName}</div>
+      <div class="match-card__team-ar">{awayAlt}</div>
+    </div>
+    {m.away.logo && (
+      <img src={m.away.logo} alt={awayName} class="match-card__logo" loading="lazy" width="36" height="36" />
+    )}
+  </div>
+
+  <div class="match-card__meta">
+    <span class={`scoreboard__status ${statusClass}`}>{statusLabel}</span>
+    <span>{m.venue?.name || ""}</span>
+  </div>
+</a>

@@ -1,0 +1,155 @@
+---
+/**
+ * archive/index.astro
+ * ───────────────────
+ * Root Arabic Match Archive Calendar. Displays active match calendar grids
+ * (April, May, June 2026) with premium Arabic localization.
+ */
+
+import { readdirSync, existsSync } from "fs";
+import { resolve } from "path";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BottomNav from "../../components/BottomNav.astro";
+
+const title = "أرشيف وتقويم نتائج المباريات | جول فلاش";
+const description = "تصفح تقويم اللقاءات وتفاصيل نتائج المباريات السابقة. أرشيف رياضي متكامل لمباريات كأس العالم ودوري روشن السعودي.";
+
+const matchesDir = resolve(process.cwd(), "src/data/matches");
+let archiveDates: string[] = [];
+
+if (existsSync(matchesDir)) {
+  archiveDates = readdirSync(matchesDir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => file.replace(".json", ""));
+}
+
+const datesSet = new Set(archiveDates);
+
+// Helper function to generate month grids
+function generateMonthData(year: number, monthIndex: number) {
+  const firstDay = new Date(year, monthIndex, 1);
+  const startDayIndex = firstDay.getDay(); // 0 = Sun, 1 = Mon...
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  
+  const weeks: (string | null)[][] = [];
+  let currentWeek: (string | null)[] = Array(7).fill(null);
+  
+  // Padding
+  for (let i = 0; i < startDayIndex; i++) {
+    currentWeek[i] = null;
+  }
+  
+  let col = startDayIndex;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayStr = String(day).padStart(2, "0");
+    const monthStr = String(monthIndex + 1).padStart(2, "0");
+    const dateStr = `${year}-${monthStr}-${dayStr}`;
+    
+    currentWeek[col] = dateStr;
+    col++;
+    
+    if (col === 7) {
+      weeks.push(currentWeek);
+      currentWeek = Array(7).fill(null);
+      col = 0;
+    }
+  }
+  
+  if (currentWeek.some(d => d !== null)) {
+    weeks.push(currentWeek);
+  }
+  
+  return weeks;
+}
+
+const year = 2026;
+const monthsToRender = [
+  { index: 3, name: "أبريل ٢٠٢٦" },
+  { index: 4, name: "مايو ٢٠٢٦" },
+  { index: 5, name: "يونيو ٢٠٢٦" }
+];
+
+const weekdayHeaders = ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+const enAlternateURL = `${Astro.url.origin}/en/archive/`;
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "الرئيسية",
+      "item": Astro.url.origin
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "أرشيف وتقويم المباريات",
+      "item": Astro.url.href
+    }
+  ]
+};
+
+const collectionPageLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": title,
+  "description": description,
+  "url": Astro.url.href,
+  "publisher": {
+    "@type": "NewsMediaOrganization",
+    "name": "جول فلاش",
+    "url": Astro.url.origin
+  }
+};
+
+const jsonLd = [collectionPageLd, breadcrumbLd];
+---
+
+<BaseLayout title={title} description={description} lang="ar" dir="rtl" jsonLd={jsonLd}>
+  <header class="page-header">
+    <h1 style="font-family:var(--font-ar);">أرشيف وتقويم المباريات</h1>
+    <p class="subtitle">اختر تاريخاً لتصفح تفاصيل اللقاءات والنتائج المسجلة في الأرشيف</p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 1rem;">
+    {monthsToRender.map((mInfo) => {
+      const weeks = generateMonthData(year, mInfo.index);
+      return (
+        <section class="detail-section" style="margin: 0; background: rgba(255,255,255,0.01); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; font-family: var(--font-ar);">
+          <h2 class="calendar-month-title" style="margin-bottom: 1rem; font-size: 1.15rem; font-weight: 800; text-align: center; color: var(--accent);">{mInfo.name}</h2>
+          
+          <div class="calendar-grid">
+            {weekdayHeaders.map((day) => (
+              <div class="calendar-day-header" style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted);">{day}</div>
+            ))}
+            
+            {weeks.map((week) => (
+              <>
+                {week.map((dateStr) => {
+                  if (!dateStr) return <div class="calendar-day" style="opacity: 0;" />;
+                  
+                  const dayNum = dateStr.split("-")[2];
+                  const hasMatches = datesSet.has(dateStr);
+                  
+                  return hasMatches ? (
+                    <a href={`/archive/${dateStr}/`} class="calendar-day has-matches" title={`عرض نتائج مباريات تاريخ ${dateStr}`}>
+                      {parseInt(dayNum)}
+                    </a>
+                  ) : (
+                    <div class="calendar-day">
+                      {parseInt(dayNum)}
+                    </div>
+                  );
+                })}
+              </>
+            ))}
+          </div>
+        </section>
+      );
+    })}
+  </div>
+
+  <BottomNav currentPath={Astro.url.pathname} lang="ar" alternateURL={enAlternateURL} />
+</BaseLayout>

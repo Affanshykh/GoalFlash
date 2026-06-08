@@ -1,0 +1,36 @@
+[
+  {
+    "id": 900003,
+    "slugEN": "al-hilal-vs-al-nassr-live-score",
+    "slugAR": "مباراة-الهلال-ضد-النصر",
+    "league": { "id": 307, "name": "Saudi Pro League", "nameAR": "دوري روشن السعودي للمحترفين", "season": 2025, "logo": "", "round": "Regular Season - 32" },
+    "badge": { "en": "Saudi Pro League", "ar": "دوري روشن", "color": "#00843d" },
+    "isWorldCup": false,
+    "isSaudiLeague": true,
+    "home": { "name": "Al Hilal", "nameAR": "الهلال", "logo": "", "goals": 3, "winner": true },
+    "away": { "name": "Al Nassr", "nameAR": "النصر", "logo": "", "goals": 2, "winner": false },
+    "status": { "short": "FT", "long": "Match Finished", "elapsed": 90, "isLive": false, "isFinished": true, "isUpcoming": false },
+    "score": { "halftime": { "home": 2, "away": 1 }, "fulltime": { "home": 3, "away": 2 }, "extratime": { "home": null, "away": null }, "penalty": { "home": null, "away": null } },
+    "venue": { "name": "Kingdom Arena", "city": "Riyadh" },
+    "date": "2026-05-15T21:00:00+03:00",
+    "timestamp": 1747332000,
+    "fetchedAt": "2026-05-15T23:00:00Z"
+  },
+  {
+    "id": 900004,
+    "slugEN": "al-ittihad-vs-al-ahli-live-score",
+    "slugAR": "مباراة-الاتحاد-ضد-الأهلي",
+    "league": { "id": 307, "name": "Saudi Pro League", "nameAR": "دوري روشن السعودي للمحترفين", "season": 2025, "logo": "", "round": "Regular Season - 32" },
+    "badge": { "en": "Saudi Pro League", "ar": "دوري روشن", "color": "#00843d" },
+    "isWorldCup": false,
+    "isSaudiLeague": true,
+    "home": { "name": "Al Ittihad", "nameAR": "الاتحاد", "logo": "", "goals": 1, "winner": false },
+    "away": { "name": "Al Ahli", "nameAR": "الأهلي", "logo": "", "goals": 1, "winner": null },
+    "status": { "short": "FT", "long": "Match Finished", "elapsed": 90, "isLive": false, "isFinished": true, "isUpcoming": false },
+    "score": { "halftime": { "home": 0, "away": 1 }, "fulltime": { "home": 1, "away": 1 }, "extratime": { "home": null, "away": null }, "penalty": { "home": null, "away": null } },
+    "venue": { "name": "King Abdullah Sports City", "city": "Jeddah" },
+    "date": "2026-05-15T21:00:00+03:00",
+    "timestamp": 1747332000,
+    "fetchedAt": "2026-05-15T23:00:00Z"
+  }
+]

@@ -1,0 +1,147 @@
+---
+/**
+ * en/archive/[date].astro
+ * ───────────────────────
+ * Displays matches and scores for a specific archived date in English.
+ */
+
+import { readdirSync, readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import MatchCard from "../../../components/MatchCard.astro";
+import BottomNav from "../../../components/BottomNav.astro";
+import tournaments from "../../../data/tournaments.json";
+
+export function getStaticPaths() {
+  const matchesDir = resolve(process.cwd(), "src/data/matches");
+  if (!existsSync(matchesDir)) return [];
+  
+  const files = readdirSync(matchesDir).filter((f) => f.endsWith(".json"));
+  
+  return files.map((file) => {
+    const dateStr = file.replace(".json", "");
+    const content = JSON.parse(readFileSync(resolve(matchesDir, file), "utf-8"));
+    return {
+      params: { date: dateStr },
+      props: { matches: content },
+    };
+  });
+}
+
+const { date } = Astro.params;
+const { matches } = Astro.props;
+
+// Format title and description
+const dateObj = new Date(date);
+const formattedDate = dateObj.toLocaleDateString("en-US", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric",
+});
+
+const title = `Football Scores and Match Results for ${formattedDate} | GoalFlash`;
+const description = `Discover all football scores and match results for ${formattedDate}. Yesterday's and today's final updates for World Cup and Saudi Pro League.`;
+
+// Group by league
+const grouped: Record<string, typeof matches> = {};
+for (const m of matches) {
+  const key = m.league.name;
+  if (!grouped[key]) grouped[key] = [];
+  grouped[key].push(m);
+}
+
+// Sort leagues: WC, SPL, others
+const leagueOrder = Object.keys(grouped).sort((a, b) => {
+  if (a === "FIFA World Cup") return -1;
+  if (b === "FIFA World Cup") return 1;
+  if (a === "Saudi Pro League") return -1;
+  if (b === "Saudi Pro League") return 1;
+  return a.localeCompare(b);
+});
+
+const arAlternateURL = `${Astro.url.origin}/archive/${date}/`;
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", position: 1, name: "Scores", item: `${Astro.url.origin}/en/` },
+    { "@type": "ListItem", position: 2, name: "Archive", item: `${Astro.url.origin}/en/archive/` },
+    { "@type": "ListItem", position: 3, name: formattedDate, item: Astro.url.href },
+  ],
+};
+
+const collectionPageLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": title,
+  "description": description,
+  "url": Astro.url.href,
+  "publisher": {
+    "@type": "NewsMediaOrganization",
+    "name": "GoalFlash",
+    "url": Astro.url.origin
+  },
+  "hasPart": matches.map(m => ({
+    "@type": "SportsEvent",
+    "name": `${m.home.name} vs ${m.away.name}`,
+    "alternateName": `${m.home.nameAR} ضد ${m.away.nameAR}`,
+    "startDate": m.date,
+    "location": {
+      "@type": "Place",
+      "name": m.venue.name || "Stadium"
+    }
+  }))
+};
+
+const jsonLd = [collectionPageLd, breadcrumbLd];
+---
+
+<BaseLayout title={title} description={description} lang="en" dir="ltr" jsonLd={jsonLd}>
+  <!-- Hreflang alternate headers -->
+  <link rel="alternate" hreflang="ar" href={arAlternateURL} slot="head" />
+  <link rel="alternate" hreflang="en" href={Astro.url.href} slot="head" />
+
+  <header class="page-header">
+    <h1>Scores: {formattedDate}</h1>
+    <p class="subtitle">Archived matches list and scores database for this day</p>
+  </header>
+
+  {matches.length === 0 && (
+    <div style="text-align:center;padding:3rem 0;color:var(--text-dim);">
+      <p style="font-size:1.2rem;">No matches recorded on this day.</p>
+    </div>
+  )}
+
+  {leagueOrder.map((leagueName) => {
+    const leagueMatches = grouped[leagueName];
+    const sample = leagueMatches[0];
+    const tObj = tournaments.find(t => t.leagueName === sample.league.name);
+    const tUrl = tObj ? `/en/tournament/${tObj.slug}/` : "/en/";
+    return (
+      <section class="league-section">
+        <div class="league-header">
+          <span class="league-header__dot" style={`background: ${sample.badge.color};`} />
+          <a href={tUrl} class="league-header__name" style="text-decoration: none; color: #fff; font-weight: 700;">
+            {sample.badge.en}
+          </a>
+          <span class="league-header__name-ar">{sample.badge.ar}</span>
+          {sample.league.round && (
+            <span class="league-header__round">
+              {sample.league.round}
+            </span>
+          )}
+        </div>
+        <div class="match-list">
+          {leagueMatches.map((m) => (
+            <MatchCard match={m} lang="en" />
+          ))}
+        </div>
+      </section>
+    );
+  })}
+
+  <div style="text-align:center;margin-top:2rem;">
+    <a href="/en/archive/" style="font-size:0.9rem;">← Back to Calendar Archive</a>
+  </div>
+
+  <BottomNav currentPath={Astro.url.pathname} lang="en" alternateURL={arAlternateURL} />
+</BaseLayout>

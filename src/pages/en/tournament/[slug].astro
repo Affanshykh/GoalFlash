@@ -1,0 +1,250 @@
+---
+/**
+ * en/tournament/[slug].astro
+ * ──────────────────────────
+ * English Tournament Hub Page. Features standings, matches, venues, and players.
+ */
+
+import { readdirSync, readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import MatchCard from "../../../components/MatchCard.astro";
+import BottomNav from "../../../components/BottomNav.astro";
+import tournaments from "../../../data/tournaments.json";
+import standings from "../../../data/standings.json";
+
+export function getStaticPaths() {
+  const tournamentsPath = resolve(process.cwd(), "src/data/tournaments.json");
+  if (!existsSync(tournamentsPath)) return [];
+  const content = JSON.parse(readFileSync(tournamentsPath, "utf-8"));
+  return content.map((t) => ({
+    params: { slug: t.slug },
+    props: { tournament: t },
+  }));
+}
+
+const { slug } = Astro.params;
+const { tournament: t } = Astro.props;
+
+// Load all matches from JSON files to filter matches of this tournament
+const matchesDir = resolve(process.cwd(), "src/data/matches");
+let tournamentMatches = [];
+if (existsSync(matchesDir)) {
+  const files = readdirSync(matchesDir).filter((f) => f.endsWith(".json"));
+  for (const file of files) {
+    try {
+      const content = JSON.parse(readFileSync(resolve(matchesDir, file), "utf-8"));
+      // Filter matches by league name
+      const filtered = content.filter((m) => m.league.name === t.leagueName);
+      tournamentMatches.push(...filtered);
+    } catch { /* ignore */ }
+  }
+}
+
+// Group matches by Status
+const liveMatches = tournamentMatches.filter(m => m.status.isLive);
+const upcomingMatches = tournamentMatches.filter(m => m.status.isUpcoming);
+const finishedMatches = tournamentMatches.filter(m => m.status.isFinished);
+
+// Get league standings for this tournament
+let leagueStandings = null;
+if (t.slug === "saudi-pro-league") leagueStandings = standings.SPL;
+else if (t.slug === "premier-league") leagueStandings = standings.EPL;
+
+// Alternate URL for language toggle (Arabic at root)
+const arAlternateURL = `${Astro.url.origin}/tournament/${t.slug}/`;
+
+const title = `${t.name} Standings, Ranks, Matches & Venues | GoalFlash`;
+const description = `Get the latest ${t.name} standings, team ranks, scheduled matches, official stadiums, and superstar players. Real-time updates and results.`;
+
+// JSON-LD SportsLeague schema
+const leagueSchema = {
+  "@context": "https://schema.org",
+  "@type": "SportsLeague",
+  "name": t.name,
+  "alternateName": t.nameAR,
+  "url": Astro.url.href,
+  "sport": "Soccer",
+  "description": t.description,
+  "competitor": t.teams.map(team => ({
+    "@type": "SportsTeam",
+    "name": team.name,
+    "alternateName": team.nameAR
+  })),
+  "hasPart": tournamentMatches.map(m => ({
+    "@type": "SportsEvent",
+    "name": `${m.home.name} vs ${m.away.name}`,
+    "alternateName": `${m.home.nameAR} ضد ${m.away.nameAR}`,
+    "startDate": m.date,
+    "location": {
+      "@type": "Place",
+      "name": m.venue.name || "Stadium",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": m.venue.city
+      }
+    }
+  }))
+};
+---
+
+<BaseLayout title={title} description={description} lang="en" dir="ltr" jsonLd={leagueSchema}>
+  <!-- Hreflang alternate headers -->
+  <link rel="alternate" hreflang="ar" href={arAlternateURL} slot="head" />
+  <link rel="alternate" hreflang="en" href={Astro.url.href} slot="head" />
+
+  <!-- Branded Header -->
+  <header class="page-header" style={`border-bottom: 2px solid ${t.color}; padding-bottom: 1.5rem; margin-bottom: 2rem;`}>
+    <span class="subtitle" style={`color: ${t.color}; text-transform: uppercase; font-weight: 800; font-size: 0.8rem; letter-spacing: 1.5px;`}>Tournament Hub</span>
+    <h1 style="margin: 0.3rem 0; font-size: 2.2rem; font-weight: 900;">{t.name}</h1>
+    <p class="subtitle" style="direction:rtl; margin-top:0.1rem; font-family:var(--font-ar); font-size: 1.1rem; color: var(--text-dim);">{t.nameAR}</p>
+    <p style="color:var(--text-muted); font-size:0.92rem; margin-top:0.75rem; max-width:800px; line-height:1.6;">{t.description}</p>
+  </header>
+
+  <div class="portal-layout">
+    <!-- Main Content (Standings & Matches) -->
+    <div>
+      {/* 1. STANDINGS OR TEAMS */}
+      {leagueStandings ? (
+        <section class="detail-section" style="margin-top: 0;">
+          <h2 style="font-size: 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            {t.name} Standings & Rankings
+          </h2>
+          <table class="standings-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Team</th>
+                <th>Played</th>
+                <th>GD</th>
+                <th style="text-align: right;">Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leagueStandings.map((row) => (
+                <tr>
+                  <td class="standings-table__pos">{row.pos}</td>
+                  <td class="standings-table__team" style="font-weight:600;">
+                    {row.team}
+                    <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400; margin-left: 0.4rem;">
+                      ({row.teamAR})
+                    </span>
+                  </td>
+                  <td>{row.played}</td>
+                  <td>{row.gd}</td>
+                  <td class="standings-table__pts" style="text-align: right;">{row.points}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : (
+        <section class="detail-section" style="margin-top: 0;">
+          <h2 style="font-size: 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            Participating Teams
+          </h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem;">
+            {t.teams.map((team) => (
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 0.75rem; border-radius: 8px; text-align: center; backdrop-filter: blur(8px);">
+                <div style="font-weight: 700; color: #fff; font-size: 0.85rem;">{team.name}</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-ar); margin-top: 0.15rem;">{team.nameAR}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 2. MATCHES LIST */}
+      <div style="margin-top: 2.5rem;">
+        {/* Live Matches */}
+        {liveMatches.length > 0 && (
+          <section class="detail-section">
+            <h2 style="color: var(--live-red); font-size: 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--live-red); animation: pulse 1.6s infinite;"></span>
+              Live Matches
+            </h2>
+            <div class="match-list">
+              {liveMatches.map((m) => <MatchCard match={m} lang="en" />)}
+            </div>
+          </section>
+        )}
+
+        {/* Upcoming Matches */}
+        {upcomingMatches.length > 0 && (
+          <section class="detail-section">
+            <h2 style="font-size: 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+              Upcoming Matches
+            </h2>
+            <div class="match-list">
+              {upcomingMatches.map((m) => <MatchCard match={m} lang="en" />)}
+            </div>
+          </section>
+        )}
+
+        {/* Finished Matches */}
+        {finishedMatches.length > 0 && (
+          <section class="detail-section">
+            <h2 style="font-size: 1.25rem; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+              Match Results
+            </h2>
+            <div class="match-list">
+              {finishedMatches.map((m) => <MatchCard match={m} lang="en" />)}
+            </div>
+          </section>
+        )}
+
+        {tournamentMatches.length === 0 && (
+          <div style="text-align:center; padding:3rem 0; color:var(--text-dim); border: 1px dashed var(--border); border-radius: 12px;">
+            <p style="font-size:1.1rem; font-weight: 600;">No matches recorded in the system.</p>
+            <p style="margin-top:0.4rem; font-size:0.85rem;">Check back during match days for active schedules.</p>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Sidebar Widgets (Venues & Stars) -->
+    <aside>
+      {/* Venues Widget */}
+      <div class="standings-widget" style="margin-bottom: 1.5rem;">
+        <h2>Official Grounds & Venues</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+          {t.grounds.map((g) => (
+            <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.6rem;">
+              <div style="font-weight: 700; color: #fff; font-size: 0.85rem; display: flex; justify-content: space-between;">
+                <span>{g.name}</span>
+                <span style="font-family: var(--font-ar); font-size: 0.75rem; color: var(--text-dim); font-weight: 400;">{g.nameAR}</span>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; display: flex; justify-content: space-between;">
+                <span>📍 {g.city}</span>
+                <span>Capacity: {g.capacity}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Superstar Highlights Widget */}
+      <div class="standings-widget">
+        <h2>Superstars & Key Players</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+          {t.players.map((p) => (
+            <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 700; color: #fff; font-size: 0.85rem;">{p.name}</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem;">{p.team}</div>
+              </div>
+              <span style="font-size: 0.75rem; color: var(--accent); font-weight: 600; font-family: var(--font-ar);">{p.nameAR}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Breadcrumb navigation links -->
+  <div style="text-align:center; margin-top:3rem; font-size:0.85rem;">
+    <a href="/en/">← Back to Scores Homepage</a>
+  </div>
+
+  <BottomNav currentPath={Astro.url.pathname} lang="en" alternateURL={arAlternateURL} />
+</BaseLayout>

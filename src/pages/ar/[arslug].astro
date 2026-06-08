@@ -1,0 +1,64 @@
+---
+/**
+ * Arabic Slug Redirect
+ * ────────────────────
+ * Generates static pages at Arabic URLs like:
+ *   /ar/مباراة-السعودية-ضد-أوروغواي/
+ *
+ * These pages contain a meta-refresh redirect pointing to the root
+ * Arabic match page, so users typing Arabic slugs are correctly routed.
+ */
+
+import { readdirSync, readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+
+export function getStaticPaths() {
+  const matchesDir = resolve(process.cwd(), "src/data/matches");
+  if (!existsSync(matchesDir)) return [];
+  
+  const files = readdirSync(matchesDir).filter((f) => f.endsWith(".json"));
+  const allMatches = [];
+  
+  for (const file of files) {
+    try {
+      const content = JSON.parse(readFileSync(resolve(matchesDir, file), "utf-8"));
+      allMatches.push(...content);
+    } catch { /* ignore */ }
+  }
+
+  return allMatches
+    .filter((m) => m.slugAR && m.slugAR !== m.slugEN)
+    .map((m) => ({
+      params: { arslug: m.slugAR },
+      props: {
+        canonicalPath: `/match/${m.slugEN}/`,
+        match: m,
+      },
+    }));
+}
+
+const { canonicalPath, match: m } = Astro.props;
+const canonicalURL = `${Astro.url.origin}${canonicalPath}`;
+
+const scoreText = m.status.isUpcoming
+  ? "لم تبدأ بعد"
+  : `${m.home.goals} – ${m.away.goals}`;
+
+const title = `نتيجة مباراة ${m.home.nameAR} ضد ${m.away.nameAR} — نتيجة ${scoreText} | GoalFlash`;
+---
+
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <link rel="canonical" href={canonicalURL} />
+    <meta http-equiv="refresh" content={`0;url=${canonicalPath}`} />
+    <meta name="robots" content="noindex,follow" />
+  </head>
+  <body>
+    <p>
+      Redirecting to <a href={canonicalPath}>{m.home.nameAR} ضد {m.away.nameAR}</a>…
+    </p>
+  </body>
+</html>

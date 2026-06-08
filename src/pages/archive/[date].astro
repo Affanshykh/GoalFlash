@@ -1,0 +1,147 @@
+---
+/**
+ * archive/[date].astro
+ * ────────────────────
+ * Displays matches and scores for a specific archived date in premium Arabic.
+ */
+
+import { readdirSync, readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MatchCard from "../../components/MatchCard.astro";
+import BottomNav from "../../components/BottomNav.astro";
+import tournaments from "../../data/tournaments.json";
+
+export function getStaticPaths() {
+  const matchesDir = resolve(process.cwd(), "src/data/matches");
+  if (!existsSync(matchesDir)) return [];
+  
+  const files = readdirSync(matchesDir).filter((f) => f.endsWith(".json"));
+  
+  return files.map((file) => {
+    const dateStr = file.replace(".json", "");
+    const content = JSON.parse(readFileSync(resolve(matchesDir, file), "utf-8"));
+    return {
+      params: { date: dateStr },
+      props: { matches: content },
+    };
+  });
+}
+
+const { date } = Astro.params;
+const { matches } = Astro.props;
+
+// Format title and description
+const dateObj = new Date(date);
+const formattedDate = dateObj.toLocaleDateString("ar-SA", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric",
+});
+
+const title = `نتائج مباريات يوم ${formattedDate} | جول فلاش`;
+const description = `تصفح نتائج وجداول مباريات يوم ${formattedDate}. تغطية شاملة ومفصلة لجميع اللقاءات المنتهية بكأس العالم ودوري روشن السعودي.`;
+
+// Group by league
+const grouped: Record<string, typeof matches> = {};
+for (const m of matches) {
+  const key = m.league.name;
+  if (!grouped[key]) grouped[key] = [];
+  grouped[key].push(m);
+}
+
+// Sort leagues: WC, SPL, others
+const leagueOrder = Object.keys(grouped).sort((a, b) => {
+  if (a === "FIFA World Cup") return -1;
+  if (b === "FIFA World Cup") return 1;
+  if (a === "Saudi Pro League") return -1;
+  if (b === "Saudi Pro League") return 1;
+  return a.localeCompare(b);
+});
+
+const enAlternateURL = `${Astro.url.origin}/en/archive/${date}/`;
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", position: 1, name: "الرئيسية", item: Astro.url.origin },
+    { "@type": "ListItem", position: 2, name: "الأرشيف", item: `${Astro.url.origin}/archive/` },
+    { "@type": "ListItem", position: 3, name: formattedDate, item: Astro.url.href },
+  ],
+};
+
+const collectionPageLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": title,
+  "description": description,
+  "url": Astro.url.href,
+  "publisher": {
+    "@type": "NewsMediaOrganization",
+    "name": "جول فلاش",
+    "url": Astro.url.origin
+  },
+  "hasPart": matches.map(m => ({
+    "@type": "SportsEvent",
+    "name": `${m.home.nameAR} ضد ${m.away.nameAR}`,
+    "alternateName": `${m.home.name} vs ${m.away.name}`,
+    "startDate": m.date,
+    "location": {
+      "@type": "Place",
+      "name": m.venue.name || "ملعب"
+    }
+  }))
+};
+
+const jsonLd = [collectionPageLd, breadcrumbLd];
+---
+
+<BaseLayout title={title} description={description} lang="ar" dir="rtl" jsonLd={jsonLd}>
+  <!-- Hreflang alternate headers -->
+  <link rel="alternate" hreflang="en" href={enAlternateURL} slot="head" />
+  <link rel="alternate" hreflang="ar" href={Astro.url.href} slot="head" />
+
+  <header class="page-header" style="font-family: var(--font-ar);">
+    <h1>نتائج مباريات: {formattedDate}</h1>
+    <p class="subtitle">قائمة اللقاءات المنتهية وتفاصيل النتائج المسجلة لهذا اليوم</p>
+  </header>
+
+  {matches.length === 0 && (
+    <div style="text-align:center;padding:3rem 0;color:var(--text-dim);font-family: var(--font-ar);">
+      <p style="font-size:1.2rem;">لا توجد مباريات مسجلة في هذا اليوم.</p>
+    </div>
+  )}
+
+  {leagueOrder.map((leagueName) => {
+    const leagueMatches = grouped[leagueName];
+    const sample = leagueMatches[0];
+    const tObj = tournaments.find(t => t.leagueName === sample.league.name);
+    const tUrl = tObj ? `/tournament/${tObj.slug}/` : "/";
+    return (
+      <section class="league-section">
+        <div class="league-header">
+          <span class="league-header__dot" style={`background: ${sample.badge.color};`} />
+          <a href={tUrl} class="league-header__name" style="text-decoration: none; color: #fff; font-family: var(--font-ar); font-weight: 700;">
+            {sample.badge.ar}
+          </a>
+          <span class="league-header__name-ar" style="font-size: 0.75rem; font-weight: 400;">{sample.badge.en}</span>
+          {sample.league.round && (
+            <span class="league-header__round" style="font-family: var(--font-ar);">
+              {sample.league.round}
+            </span>
+          )}
+        </div>
+        <div class="match-list">
+          {leagueMatches.map((m) => (
+            <MatchCard match={m} lang="ar" />
+          ))}
+        </div>
+      </section>
+    );
+  })}
+
+  <div style="text-align:center;margin-top:2rem;font-family: var(--font-ar);">
+    <a href="/archive/" style="font-size:0.9rem;">← العودة إلى تقويم الأرشيف</a>
+  </div>
+
+  <BottomNav currentPath={Astro.url.pathname} lang="ar" alternateURL={enAlternateURL} />
+</BaseLayout>

@@ -1,0 +1,49 @@
+---
+/**
+ * BottomNav.astro
+ * ────────────────
+ * Sticky bottom navigation bar optimized for mobile phone users.
+ * Provides thumb-friendly navigation to Home/Scores, Live Matches, Archive, and Language Switcher.
+ */
+
+interface Props {
+  currentPath: string;
+  lang?: "en" | "ar";
+  alternateURL?: string;
+}
+
+const { currentPath, lang = "ar", alternateURL = "/" } = Astro.props;
+
+const isAR = lang === "ar";
+
+// Clean current path for active checks
+const path = currentPath.endsWith("/") ? currentPath : `${currentPath}/`;
+
+const scoresLink = isAR ? "/" : "/en/";
+const archiveLink = isAR ? "/archive/" : "/en/archive/";
+
+const isScoresActive = path === "/" || path === "/en/";
+const isArchiveActive = path.includes("/archive/");
+---
+
+<nav class="mobile-nav">
+  <a href={scoresLink} class={`mobile-nav__item ${isScoresActive ? 'active' : ''}`}>
+    <span class="mobile-nav__icon">🏟️</span>
+    <span style="font-family: var(--font-ar);">{isAR ? "الرئيسية" : "Scores"}</span>
+  </a>
+
+  <a href={`${scoresLink}?status=live`} class="mobile-nav__item">
+    <span class="mobile-nav__icon" style="color: var(--live-red); animation: pulse 1.6s infinite;">🔴</span>
+    <span style="font-family: var(--font-ar);">{isAR ? "مباشر" : "Live"}</span>
+  </a>
+
+  <a href={archiveLink} class={`mobile-nav__item ${isArchiveActive ? 'active' : ''}`}>
+    <span class="mobile-nav__icon">📅</span>
+    <span style="font-family: var(--font-ar);">{isAR ? "التقويم" : "Calendar"}</span>
+  </a>
+
+  <a href={alternateURL} class="mobile-nav__item">
+    <span class="mobile-nav__icon">🌐</span>
+    <span>{isAR ? "English" : "العربية"}</span>
+  </a>
+</nav>

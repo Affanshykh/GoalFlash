@@ -1,0 +1,36 @@
+[
+  {
+    "id": 900007,
+    "slugEN": "saudi-arabia-vs-germany-live-score",
+    "slugAR": "مباراة-السعودية-ضد-ألمانيا",
+    "league": { "id": 10, "name": "Friendlies", "nameAR": "مباريات ودية دولية", "season": 2026, "logo": "", "round": "World Cup Warm-up" },
+    "badge": { "en": "International Friendly", "ar": "مباراة ودية", "color": "#2563eb" },
+    "isWorldCup": false,
+    "isSaudiLeague": false,
+    "home": { "name": "Saudi Arabia", "nameAR": "السعودية", "logo": "", "goals": 1, "winner": false },
+    "away": { "name": "Germany", "nameAR": "ألمانيا", "logo": "", "goals": 2, "winner": true },
+    "status": { "short": "FT", "long": "Match Finished", "elapsed": 90, "isLive": false, "isFinished": true, "isUpcoming": false },
+    "score": { "halftime": { "home": 0, "away": 1 }, "fulltime": { "home": 1, "away": 2 }, "extratime": { "home": null, "away": null }, "penalty": { "home": null, "away": null } },
+    "venue": { "name": "King Fahd Stadium", "city": "Riyadh" },
+    "date": "2026-06-08T19:00:00+03:00",
+    "timestamp": 1749402000,
+    "fetchedAt": "2026-06-08T22:00:00Z"
+  },
+  {
+    "id": 900008,
+    "slugEN": "england-vs-iceland-live-score",
+    "slugAR": "مباراة-إنجلترا-ضد-آيسلندا",
+    "league": { "id": 10, "name": "Friendlies", "nameAR": "مباريات ودية دولية", "season": 2026, "logo": "", "round": "World Cup Warm-up" },
+    "badge": { "en": "International Friendly", "ar": "مباراة ودية", "color": "#2563eb" },
+    "isWorldCup": false,
+    "isSaudiLeague": false,
+    "home": { "name": "England", "nameAR": "إنجلترا", "logo": "", "goals": 3, "winner": true },
+    "away": { "name": "Iceland", "nameAR": "آيسلندا", "logo": "", "goals": 0, "winner": false },
+    "status": { "short": "FT", "long": "Match Finished", "elapsed": 90, "isLive": false, "isFinished": true, "isUpcoming": false },
+    "score": { "halftime": { "home": 1, "away": 0 }, "fulltime": { "home": 3, "away": 0 }, "extratime": { "home": null, "away": null }, "penalty": { "home": null, "away": null } },
+    "venue": { "name": "Wembley Stadium", "city": "London" },
+    "date": "2026-06-08T18:00:00+00:00",
+    "timestamp": 1749405600,
+    "fetchedAt": "2026-06-08T22:00:00Z"
+  }
+]

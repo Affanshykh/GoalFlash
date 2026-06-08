@@ -1,0 +1,47 @@
+---
+/**
+ * ar/match/[slug].astro
+ * ─────────────────────
+ * Redirects legacy Arabic match pages to root Arabic match pages.
+ */
+
+import { readdirSync, readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+
+export function getStaticPaths() {
+  const matchesDir = resolve(process.cwd(), "src/data/matches");
+  if (!existsSync(matchesDir)) return [];
+  
+  const files = readdirSync(matchesDir).filter((f) => f.endsWith(".json"));
+  const allMatches = [];
+  
+  for (const file of files) {
+    try {
+      const content = JSON.parse(readFileSync(resolve(matchesDir, file), "utf-8"));
+      allMatches.push(...content);
+    } catch { /* ignore */ }
+  }
+  
+  return allMatches.map((m) => ({
+    params: { slug: m.slugEN },
+    props: { match: m },
+  }));
+}
+
+const { match: m } = Astro.props;
+const redirectPath = `/match/${m.slugEN}/`;
+const canonicalURL = `${Astro.url.origin}${redirectPath}`;
+---
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <link rel="canonical" href={canonicalURL} />
+    <meta http-equiv="refresh" content={`0;url=${redirectPath}`} />
+    <meta name="robots" content="noindex,follow" />
+  </head>
+  <body>
+    <p>Redirecting to <a href={redirectPath}>{m.home.nameAR} ضد {m.away.nameAR}</a>…</p>
+  </body>
+</html>

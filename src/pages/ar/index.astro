@@ -1,0 +1,21 @@
+---
+/**
+ * ar/index.astro
+ * ──────────────
+ * Legacy Arabic Homepage. Redirects to root Arabic homepage at /.
+ */
+const canonicalURL = Astro.url.origin;
+---
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>جول فلاش</title>
+    <link rel="canonical" href={canonicalURL} />
+    <meta http-equiv="refresh" content="0;url=/" />
+    <meta name="robots" content="noindex,follow" />
+  </head>
+  <body>
+    <p>Redirecting to <a href="/">جول فلاش</a>…</p>
+  </body>
+</html>

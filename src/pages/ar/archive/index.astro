@@ -1,0 +1,21 @@
+---
+/**
+ * ar/archive/index.astro
+ * ──────────────────────
+ * Redirects legacy Arabic archive index to root Arabic archive calendar.
+ */
+const canonicalURL = `${Astro.url.origin}/archive/`;
+---
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <link rel="canonical" href={canonicalURL} />
+    <meta http-equiv="refresh" content="0;url=/archive/" />
+    <meta name="robots" content="noindex,follow" />
+  </head>
+  <body>
+    <p>Redirecting to <a href="/archive/">تقويم المباريات</a>…</p>
+  </body>
+</html>

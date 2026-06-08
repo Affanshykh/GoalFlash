@@ -1,0 +1,98 @@
+# ══════════════════════════════════════════════════════════════
+# GoalFlash — Automated Fetch → Build → Deploy Pipeline
+# ══════════════════════════════════════════════════════════════
+#
+# Schedule strategy (all times UTC):
+#
+#   WORLD CUP MODE (Jun-Jul 2026):
+#     Every 2 hours from 12:00–23:00 UTC = 6 runs/day
+#     Matches happen 14:00–22:00 UTC (afternoon/evening in US)
+#
+#   SAUDI PRO LEAGUE MODE (Aug-May):
+#     Every 3 hours from 11:00–23:00 UTC = 5 runs/day
+#     Matches: 16:00–21:00 AST = 13:00–18:00 UTC
+#
+#   API budget: ~10 calls/run × 6 runs = 60/day (under 100 limit)
+# ══════════════════════════════════════════════════════════════
+
+name: Fetch & Deploy
+
+on:
+  workflow_dispatch: # Manual trigger
+
+  schedule:
+    # World Cup peak: every 2h during match windows
+    - cron: "0 12,14,16,18,20,22 * 6,7 *"   # Jun-Jul only
+    # Regular season: every 3h
+    - cron: "0 8,11,14,17,20,23 * 1-5,8-12 *"  # Jan-May, Aug-Dec
+
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  fetch-build-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # ── Setup ──────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Fetch ──────────────────────────────────────────────
+      - name: Fetch match data
+        run: npm run fetch
+        env:
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+
+      # ── Commit updated JSON ────────────────────────────────
+      - name: Commit matches data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/matches/
+          if git diff --staged --quiet; then
+            echo "No data changes — skipping commit"
+          else
+            git commit -m "data: update scores [$(date -u +%Y-%m-%dT%H:%M)]"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Build ──────────────────────────────────────────────
+      - name: Build Astro
+        run: npm run build
+
+      # ── Deploy: Cloudflare Pages ───────────────────────────
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=goalflash
+
+      # ── Deploy: Vercel (alternative — uncomment if needed) ─
+      # - name: Deploy to Vercel
+      #   uses: amondnet/vercel-action@v25
+      #   with:
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+      #     vercel-args: "--prod"
+      #     working-directory: ./dist
