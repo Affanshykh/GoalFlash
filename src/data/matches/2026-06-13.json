@@ -3,15 +3,65 @@
     "id": 900002,
     "slugEN": "argentina-vs-spain-live-score",
     "slugAR": "مباراة-الأرجنتين-ضد-إسبانيا",
-    "league": { "id": 1, "name": "FIFA World Cup", "nameAR": "كأس العالم", "season": 2026, "logo": "", "round": "Group B - 1" },
-    "badge": { "en": "World Cup 2026", "ar": "كأس العالم ٢٠٢٦", "color": "#d4af37" },
+    "league": {
+      "id": 1,
+      "name": "FIFA World Cup",
+      "nameAR": "كأس العالم",
+      "season": 2026,
+      "logo": "",
+      "round": "Group B - 1"
+    },
+    "badge": {
+      "en": "World Cup 2026",
+      "ar": "كأس العالم ٢٠٢٦",
+      "color": "#d4af37"
+    },
     "isWorldCup": true,
     "isSaudiLeague": false,
-    "home": { "name": "Argentina", "nameAR": "الأرجنتين", "logo": "", "goals": null, "winner": null },
-    "away": { "name": "Spain", "nameAR": "إسبانيا", "logo": "", "goals": null, "winner": null },
-    "status": { "short": "NS", "long": "Not Started", "elapsed": null, "isLive": false, "isFinished": false, "isUpcoming": true },
-    "score": { "halftime": { "home": null, "away": null }, "fulltime": { "home": null, "away": null }, "extratime": { "home": null, "away": null }, "penalty": { "home": null, "away": null } },
-    "venue": { "name": "AT&T Stadium", "city": "Arlington" },
+    "home": {
+      "name": "Argentina",
+      "nameAR": "الأرجنتين",
+      "logo": "",
+      "goals": null,
+      "winner": null
+    },
+    "away": {
+      "name": "Spain",
+      "nameAR": "إسبانيا",
+      "logo": "",
+      "goals": null,
+      "winner": null
+    },
+    "status": {
+      "short": "NS",
+      "long": "Not Started",
+      "elapsed": null,
+      "isLive": false,
+      "isFinished": false,
+      "isUpcoming": true
+    },
+    "score": {
+      "halftime": {
+        "home": null,
+        "away": null
+      },
+      "fulltime": {
+        "home": null,
+        "away": null
+      },
+      "extratime": {
+        "home": null,
+        "away": null
+      },
+      "penalty": {
+        "home": null,
+        "away": null
+      }
+    },
+    "venue": {
+      "name": "AT&T Stadium",
+      "city": "Arlington"
+    },
     "date": "2026-06-13T21:00:00+00:00",
     "timestamp": 1781550000,
     "fetchedAt": "2026-06-12T20:00:00Z"
